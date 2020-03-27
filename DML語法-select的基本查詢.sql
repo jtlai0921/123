@@ -273,6 +273,18 @@ select 職稱,count(*)'人數'
 from dbo.員工
 group by 職稱
 having COUNT(*)>4
+ 
+ use Norwindc
+select 行政區,count(*)'人數'
+from dbo.員工
+group by 行政區
+having COUNT(*)>0
+--請找出訂購產品超過3的訂單
+ use Norwindc
+select 訂單號碼,count(*)'數量'
+from dbo.訂貨明細
+group by 訂單號碼
+having COUNT(*)>3
 --with rolling運算子
 use Norwindc
 select 產品編號,單價,SUM(數量)[總數量]
@@ -315,3 +327,163 @@ use Norwindc
 select 類別編號[產品編號],產品[產品名稱],單價[產品單價]
 from dbo.產品資料
 order by 3
+--列出前5筆訂貨資料
+use Norwindc
+select Top 5 *
+from dbo.[訂貨主檔]
+
+use Norwindc
+select Top 10 percent *
+from dbo.[訂貨主檔]
+
+select top (5)with ties*
+from dbo.[訂貨明細]
+order by 數量 desc
+
+--offset和fetch next分業查詢
+use Norwindc
+select O.訂單號碼 '訂單編號',
+E.姓名'負責業務人員'
+from dbo.訂貨主檔 O inner join dbo.員工 E
+on o.員工編號=E.員工編號
+order by 訂單編號 offset 10 row
+
+use Norwindc
+select O.訂單號碼 '訂單編號',
+E.姓名'負責業務人員'
+from dbo.訂貨主檔 O inner join dbo.員工 E
+on o.員工編號=E.員工編號
+order by 訂單編號 offset 10 row fetch next 5 row only
+--inner join
+use Norwindc
+select dbo.訂貨主檔.訂單號碼'訂單編號',
+dbo.員工.姓名 '負責業務人員'
+from dbo.訂貨主檔  inner join dbo.員工 
+on dbo.訂貨主檔.員工編號=dbo.員工.員工編號
+
+use Norwindc
+select dbo.訂貨主檔.訂單號碼'訂單編號',
+dbo.員工.姓名 '負責業務人員'
+from dbo.訂貨主檔 ,dbo.員工 
+where dbo.訂貨主檔.員工編號=dbo.員工.員工編號
+
+use Norwindc
+select O.訂單號碼 '訂單編號',
+E.姓名 '負責業務人員'
+from dbo.訂貨主檔 O inner join dbo.員工 E
+on O.員工編號=E.員工編號
+
+use Norwindc
+select O.訂單號碼 '訂單編號',
+E.姓名 '負責業務人員'
+from dbo.訂貨主檔 O , dbo.員工 E
+where O.員工編號=E.員工編號
+--outer join
+--left 
+use Norwindc
+select E.員工編號,O.員工編號,O.訂單號碼
+from dbo.訂貨主檔 O left join dbo.員工 E
+on O.員工編號=E.員工編號
+order by E.員工編號
+--right
+use Norwindc
+select E.員工編號,O.員工編號,O.訂單號碼
+from dbo.訂貨主檔 O right join dbo.員工 E
+on O.員工編號=E.員工編號
+order by E.員工編號
+--full outer join
+use Norwindc
+select E.員工編號,O.員工編號,O.訂單號碼
+from dbo.訂貨主檔 O full join dbo.員工 E
+on O.員工編號=E.員工編號
+order by E.員工編號
+--exec sp_dbcmptlevel 資料庫名稱,80;
+--exec sp_dbcmptlevel 資料庫名稱,90;
+--where table1.ColumnName*=table2.ColumnName
+--outer join
+use Norwindc
+exec sp_dbcmptlevel Northwindc, 80;
+select E.員工編號,O.員工編號,O.訂單號碼
+from dbo.訂貨主檔 O , dbo.員工 E
+where O.員工編號=E.員工編號 and
+            O.訂單號碼<=10255
+order by E.員工編號
+--cross join
+use Norwindc
+select*
+from dbo.訂貨主檔 cross join dbo.員工
+--self join
+use Norwindc
+select E1.員工編號 [員工編號],
+E1.姓名[員工姓名],
+E2.員工編號[主管編號],
+E1.姓名[主管姓名]
+from dbo.員工 E1 left join dbo.員工 E2
+on E1.主管=E2.員工編號
+--union聯集查詢
+use Norwindc
+select 城市,行政區
+from  dbo.員工
+union
+select 城市,行政區
+from  dbo.客戶
+ 
+ use Norwindc
+select 城市,行政區,區域號碼
+from  dbo.員工
+union
+select 城市,行政區,郵遞區號
+from  dbo.客戶
+union
+select'台灣','台北','882'
+--intersect
+ use Norwindc
+select 城市,行政區+'區'行政區
+from  dbo.員工
+intersect
+select 城市,行政區
+from  dbo.客戶
+--except
+ use Norwindc
+select 城市,行政區+'區'行政區
+from  dbo.員工
+except
+select 城市,行政區
+from  dbo.客戶
+--subqery
+select 訂單號碼,(select sum(數量) from dbo.訂貨明細 where dbo.訂貨主檔.訂單號碼=訂單號碼)總數量
+from  dbo.訂貨主檔
+
+select O.訂單號碼,D.數量
+ from  dbo.訂貨主檔 O join
+ (select 訂單號碼,sum(數量)數量 from dbo.訂貨明細 group by 訂單號碼)D on o.訂單號碼=d.訂單號碼
+ --獨立子
+  use Norwindc
+select *
+from  dbo.客戶
+where 城市 in(select distinct 城市 from dbo.員工)
+--corelate
+use Norwindc
+select *
+from  dbo.訂貨主檔
+where (select sum(數量) from dbo.訂貨明細 where dbo.訂貨主檔.訂單號碼=訂單號碼)>100
+--in
+use Norwindc
+select *
+from  dbo.客戶
+where 城市 in (select distinct 城市 from dbo.員工)
+--all
+use Norwindc
+select *
+from  dbo.訂貨明細
+where 單價<=All (select distinct 單價 from dbo.產品資料)
+--對比清單
+use Norwindc
+select *
+from  dbo.訂貨明細
+where 單價<=Any(select distinct 單價 from dbo.產品資料)
+
+use Norwindc
+select *
+from  dbo.客戶
+where Exists(select*from dbo.訂貨主檔 where dbo.客戶.客戶編號=客戶編號)
